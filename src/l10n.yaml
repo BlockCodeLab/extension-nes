@@ -1,0 +1,7 @@
+en:
+  extension.nes.name: NES emulator
+  extension.nes.download: Download ROM
+
+zh-Hans:
+  extension.nes.name: NES 模拟器
+  extension.nes.download: 下载 ROM
