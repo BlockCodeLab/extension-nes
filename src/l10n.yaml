@@ -1,7 +1,7 @@
 en:
   extension.nes.name: NES emulator
-  extension.nes.download: Download ROM
+  extension.nes.download: Download ROM to Arcade
 
 zh-Hans:
   extension.nes.name: NES 模拟器
-  extension.nes.download: 下载 ROM
+  extension.nes.download: 下载 ROM 到游戏机
