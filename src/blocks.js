@@ -1,5 +1,5 @@
 import { Text, Spinner } from '@blockcode/ui';
-import { connectDevice, downloadDevice, showDownloadScreen } from '@blockcode/device-pyboard';
+import { connectDevice, downloadDevice, configDevice, showDownloadScreen } from '@blockcode/device-pyboard';
 import translations from './l10n.yaml';
 import iconURI from './icon.png';
 
@@ -79,19 +79,25 @@ export default {
         fileInput.click();
         fileInput.addEventListener('change', async ({ target }) => {
           const files = [];
+          let gameKey = '';
           for (const file of target.files) {
             files.push({
               id: `nes/${file.name}`,
               content: await file.arrayBuffer(),
             });
+            gameKey = file.name;
           }
 
           try {
             await showDownloadScreen(currentDevice, 'arcade');
-            downloadDevice(currentDevice, files, (progress) => downloadingAlert(createAlert, removeAlert, progress));
-          } catch (err) {
-            console.log(err);
-          }
+            await downloadDevice(currentDevice, files, (progress) =>
+              downloadingAlert(createAlert, removeAlert, progress),
+            );
+            await configDevice(currentDevice, {
+              'latest-game': gameKey,
+            });
+            currentDevice.hardwareReset();
+          } catch (err) {}
         });
       },
     },
