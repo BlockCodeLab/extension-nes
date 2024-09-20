@@ -1,5 +1,5 @@
 import { Text, Spinner } from '@blockcode/ui';
-import { connectDevice, downloadDevice, configDevice, showDownloadScreen } from '@blockcode/device-pyboard';
+import { connectDevice, writeFiles, configDevice, showDownloadScreen } from '@blockcode/device-pyboard';
 import translations from './l10n.yaml';
 import iconURI from './icon.png';
 
@@ -90,13 +90,11 @@ export default {
 
           try {
             await showDownloadScreen(currentDevice, 'arcade');
-            await downloadDevice(currentDevice, files, (progress) =>
-              downloadingAlert(createAlert, removeAlert, progress),
-            );
+            await writeFiles(currentDevice, files, (progress) => downloadingAlert(createAlert, removeAlert, progress));
             await configDevice(currentDevice, {
               'latest-game': gameKey,
             });
-            currentDevice.hardwareReset();
+            currentDevice.hardReset();
           } catch (err) {}
         });
       },
