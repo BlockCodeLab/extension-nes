@@ -1,5 +1,5 @@
 import { Text, Spinner } from '@blockcode/ui';
-import { connectDevice, writeFiles, configDevice, showDownloadScreen } from '@blockcode/device-pyboard';
+import { connectDevice, checkDevice, writeFiles, configDevice } from '@blockcode/device-pyboard';
 import translations from './l10n.yaml';
 import iconURI from './icon.png';
 
@@ -37,10 +37,35 @@ const downloadingAlert = (createAlert, removeAlert, progress) => {
       ),
     });
     setTimeout(() => {
-      removeAlert(downloadingAlert.id);
-      delete downloadingAlert.id;
+      removeDownloading(removeAlert);
     }, 1000);
   }
+};
+
+const removeDownloading = (removeAlert) => {
+  removeAlert(downloadingAlert.id);
+  delete downloadingAlert.id;
+};
+
+const errorAlert = (createAlert, err) => {
+  if (err === 'NotFoundError') return;
+  createAlert(
+    {
+      message:
+        err === 'NotFoundError' ? (
+          <Text
+            id="blocks.alert.connectionCancel"
+            defaultMessage="Connection cancel."
+          />
+        ) : (
+          <Text
+            id="blocks.alert.connectionError"
+            defaultMessage="Connection error."
+          />
+        ),
+    },
+    1000,
+  );
 };
 
 export default {
@@ -63,14 +88,18 @@ export default {
       async onClick({ context, createAlert, removeAlert }) {
         if (downloadingAlert.id) return;
 
-        const { device, setDevice } = context;
         let currentDevice;
         try {
-          currentDevice = device || (await connectDevice(deviceFilters, setDevice));
+          currentDevice = await connectDevice(deviceFilters);
         } catch (err) {
-          console.log(err);
+          errorAlert(createAlert, err);
         }
         if (!currentDevice) return;
+
+        const checker = checkDevice(currentDevice).catch(() => {
+          errorAlert(createAlert);
+          removeDownloading(removeAlert);
+        });
 
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
@@ -89,13 +118,17 @@ export default {
           }
 
           try {
-            await showDownloadScreen(currentDevice, 'arcade');
             await writeFiles(currentDevice, files, (progress) => downloadingAlert(createAlert, removeAlert, progress));
             await configDevice(currentDevice, {
               'latest-game': gameKey,
             });
             currentDevice.hardReset();
-          } catch (err) {}
+          } catch (err) {
+            errorAlert(createAlert, err);
+            removeDownloading(removeAlert);
+          } finally {
+            checker.cancel();
+          }
         });
       },
     },
